@@ -3727,30 +3727,37 @@ Elm.Model.make = function (_elm) {
              ,keysDown: c
              ,player: a};
    });
+   var Player = F6(function (a,
+   b,
+   c,
+   d,
+   e,
+   f) {
+      return {_: {}
+             ,coords: b
+             ,dir: c
+             ,moving: e
+             ,pos: a
+             ,size: d
+             ,speed: f};
+   });
+   var Down = {ctor: "Down"};
    var initPlayer = {_: {}
                     ,coords: {ctor: "_Tuple2"
                              ,_0: 0
                              ,_1: 0}
+                    ,dir: Down
                     ,moving: false
                     ,pos: {ctor: "_Tuple2"
-                          ,_0: 0.0
-                          ,_1: 0.0}
+                          ,_0: 100.0
+                          ,_1: 100.0}
                     ,size: {ctor: "_Tuple2"
                            ,_0: 32
                            ,_1: 32}
                     ,speed: 4.0};
-   var Player = F5(function (a,
-   b,
-   c,
-   d,
-   e) {
-      return {_: {}
-             ,coords: b
-             ,moving: d
-             ,pos: a
-             ,size: c
-             ,speed: e};
-   });
+   var Up = {ctor: "Up"};
+   var Right = {ctor: "Right"};
+   var Left = {ctor: "Left"};
    var initCamera = {_: {}
                     ,pos: {ctor: "_Tuple2"
                           ,_0: 0.0
@@ -3767,11 +3774,22 @@ Elm.Model.make = function (_elm) {
              ,pos: a
              ,size: b};
    });
+   var keys = {_: {}
+              ,down: 40
+              ,left: 37
+              ,right: 39
+              ,space: 32
+              ,up: 38};
    var tileSize = 64;
    _elm.Model.values = {_op: _op
                        ,tileSize: tileSize
+                       ,keys: keys
                        ,Camera: Camera
                        ,initCamera: initCamera
+                       ,Left: Left
+                       ,Right: Right
+                       ,Up: Up
+                       ,Down: Down
                        ,Player: Player
                        ,initPlayer: initPlayer
                        ,Model: Model
@@ -10135,7 +10153,11 @@ function patchObject(node, props, previous, propName, propValue) {
             if (attrValue === undefined) {
                 node.removeAttribute(attrName)
             } else {
-                node.setAttribute(attrName, attrValue)
+                if (attrName.indexOf("xlink:") > -1) {
+                    node.setAttributeNS("http://www.w3.org/1999/xlink", attrName, attrValue)    
+                } else {
+                    node.setAttribute(attrName, attrValue)
+                }
             }
         }
 
@@ -13485,23 +13507,25 @@ Elm.Update.make = function (_elm) {
          x = $._0,
          y = $._1;
          var down = A2($Set.member,
-         40,
+         $Model.keys.down,
          keysDown);
          var up = A2($Set.member,
-         38,
+         $Model.keys.up,
          keysDown);
          var dy = (up ? -1 : 0) + (down ? 1 : 0);
          var right = A2($Set.member,
-         39,
+         $Model.keys.right,
          keysDown);
          var left = A2($Set.member,
-         37,
+         $Model.keys.left,
          keysDown);
          var dx = (left ? -1 : 0) + (right ? 1 : 0);
+         var newDir = left ? $Model.Left : right ? $Model.Right : up ? $Model.Up : down ? $Model.Down : player.dir;
          return _U.replace([["pos"
                             ,{ctor: "_Tuple2"
                              ,_0: x + dx
-                             ,_1: y + dy}]],
+                             ,_1: y + dy}]
+                           ,["dir",newDir]],
          player);
       }();
    });
@@ -13528,7 +13552,7 @@ Elm.Update.make = function (_elm) {
                                action._0)]],
               model);}
          _U.badCase($moduleName,
-         "between lines 68 and 80");
+         "between lines 71 and 83");
       }();
    });
    var lerp = F3(function (start,
@@ -13563,22 +13587,47 @@ Elm.View.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm),
    $Svg = Elm.Svg.make(_elm),
    $Svg$Attributes = Elm.Svg.Attributes.make(_elm);
-   var drawPlayer = function (player) {
+   var drawPlayer = F2(function (player,
+   keysDown) {
       return function () {
+         var angle = function () {
+            var _v0 = player.dir;
+            switch (_v0.ctor)
+            {case "Down": return 0;
+               case "Left": return 90;
+               case "Right": return 270;
+               case "Up": return 180;}
+            _U.badCase($moduleName,
+            "between lines 26 and 31");
+         }();
          var $ = player.pos,
-         x = $._0,
-         y = $._1;
+         xPos = $._0,
+         yPos = $._1;
          var $ = player.size,
-         width = $._0,
-         height = $._1;
-         return A2($Svg.circle,
-         _L.fromArray([$Svg$Attributes.fill("#00F")
-                      ,$Svg$Attributes.cx($Basics.toString(x))
-                      ,$Svg$Attributes.cy($Basics.toString(y))
-                      ,$Svg$Attributes.r($Basics.toString(width / 2 | 0))]),
+         w = $._0,
+         h = $._1;
+         return A2($Svg.image,
+         _L.fromArray([$Svg$Attributes.xlinkHref("/assets/snake.png")
+                      ,$Svg$Attributes.x($Basics.toString(xPos))
+                      ,$Svg$Attributes.y($Basics.toString(yPos))
+                      ,$Svg$Attributes.width("32px")
+                      ,$Svg$Attributes.height("32px")
+                      ,$Svg$Attributes.transform(A2($Basics._op["++"],
+                      "rotate(",
+                      A2($Basics._op["++"],
+                      $Basics.toString(angle),
+                      A2($Basics._op["++"],
+                      ", ",
+                      A2($Basics._op["++"],
+                      $Basics.toString(xPos + 16),
+                      A2($Basics._op["++"],
+                      " ",
+                      A2($Basics._op["++"],
+                      $Basics.toString(yPos + 16),
+                      ")")))))))]),
          _L.fromArray([]));
       }();
-   };
+   });
    var drawBackground = F2(function (cameraWidth,
    cameraHeight) {
       return A2($Svg.rect,
@@ -13595,15 +13644,16 @@ Elm.View.make = function (_elm) {
          cameraWidth = $._0,
          cameraHeight = $._1;
          return A2($Svg.svg,
-         _L.fromArray([$Svg$Attributes.version("1.1")
-                      ,$Svg$Attributes.x("0")
+         _L.fromArray([$Svg$Attributes.x("0")
                       ,$Svg$Attributes.y("0")
                       ,$Svg$Attributes.width($Basics.toString(cameraWidth - 4))
                       ,$Svg$Attributes.height($Basics.toString(cameraHeight - 4))]),
          _L.fromArray([A2(drawBackground,
                       cameraWidth,
                       cameraHeight)
-                      ,drawPlayer(model.player)]));
+                      ,A2(drawPlayer,
+                      model.player,
+                      model.keysDown)]));
       }();
    };
    _elm.View.values = {_op: _op
