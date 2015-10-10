@@ -23,13 +23,15 @@ updatePlayer player dt =
 -}
 updatePlayer player keysDown dt =
   let
-    left = member 37 keysDown
-    right = member 39 keysDown
-    up = member 38 keysDown
-    down = member 40 keysDown
+    left = member keys.left keysDown
+    right = member keys.right keysDown
+    up = member keys.up keysDown
+    down = member keys.down keysDown
 
     dx = (if left then -1 else 0) + (if right then 1 else 0)
     dy = (if up then -1 else 0) + (if down then 1 else 0)
+
+    newDir = if left then Left else if right then Right else if up then Up else if down then Down else player.dir
 
     (x, y) = player.pos
     --(col, row) = player.coords
@@ -40,6 +42,7 @@ updatePlayer player keysDown dt =
   in
     { player
       | pos <- (x + dx, y + dy)
+      , dir <- newDir
       --, moving <- (floor x) == (floor newX) && (floor y == floor newY)
     }
 

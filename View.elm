@@ -4,6 +4,7 @@ import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Html exposing (Html)
 import Model exposing (..)
+import Set
 
 
 drawBackground : Float -> Float -> Html
@@ -17,18 +18,26 @@ drawBackground cameraWidth cameraHeight =
     ] []
 
 
-drawPlayer : Player -> Html
-drawPlayer player =
+drawPlayer : Player -> Keys -> Html
+drawPlayer player keysDown =
   let
-    (width, height) = player.size
-    (x, y) = player.pos
+    (w, h) = player.size
+    (xPos, yPos) = player.pos
+    angle = case player.dir of
+      Down -> 0
+      Left -> 90
+      Up -> 180
+      Right -> 270
   in
-    circle
-      [ fill "#00F"
-      , cx <| toString x
-      , cy <| toString y
-      , r <| toString <| width // 2
-      ] []
+    image
+      [ xlinkHref "/assets/snake.png"
+      , x <| toString xPos
+      , y <| toString yPos
+      , width "32px"
+      , height "32px"
+      , transform ("rotate(" ++ (toString angle) ++ ", " ++ (toString <| xPos + 16) ++ " " ++ (toString <| yPos + 16) ++ ")")
+      ]
+      [ ]
   
 
 view : Model -> Html
@@ -37,12 +46,11 @@ view model =
     (cameraWidth, cameraHeight) = model.camera.size
   in
     svg
-      [ version "1.1"
-      , x "0"
+      [ x "0"
       , y "0"
       , width <| toString <| cameraWidth - 4
       , height <| toString <| cameraHeight - 4
       ]
       [ drawBackground cameraWidth cameraHeight
-      , drawPlayer model.player
+      , drawPlayer model.player model.keysDown
       ]

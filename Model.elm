@@ -8,6 +8,14 @@ import Keyboard exposing (KeyCode)
 tileSize : Int
 tileSize = 64
 
+keys =
+  { left = 37
+  , right = 39
+  , up = 38
+  , down = 40
+  , space = 32
+  }
+
 
 type alias Keys = Set KeyCode
 
@@ -31,10 +39,12 @@ initCamera =
   }
 
 
+type Direction = Left | Right | Up | Down
 
 type alias Player =
   { pos : Position -- x,y position
   , coords : Coords -- col,row position
+  , dir : Direction
   , size : Size
   , moving : Bool
   , speed : Float
@@ -43,8 +53,9 @@ type alias Player =
 
 initPlayer : Player
 initPlayer =
-  { pos = (0.0, 0.0)
+  { pos = (100.0, 100.0)
   , coords = (0, 0)
+  , dir = Down
   , size = (32, 32)
   , moving = False
   , speed = 4.0
