@@ -28,14 +28,17 @@ drawPlayer player keysDown =
       Left -> 90
       Up -> 180
       Right -> 270
+    (anchorX, anchorY) = player.anchor
+    offsetX = anchorX * toFloat w
+    offsetY = anchorY * toFloat h
   in
     image
-      [ xlinkHref "/assets/snake.png"
+      [ xlinkHref "assets/snake.png"
       , x <| toString xPos
       , y <| toString yPos
       , width "32px"
       , height "32px"
-      , transform ("rotate(" ++ (toString angle) ++ ", " ++ (toString <| xPos + 16) ++ " " ++ (toString <| yPos + 16) ++ ")")
+      , transform ("rotate(" ++ (toString angle) ++ ", " ++ (toString <| xPos + offsetX) ++ " " ++ (toString <| yPos + offsetY) ++ ")")
       ]
       [ ]
   

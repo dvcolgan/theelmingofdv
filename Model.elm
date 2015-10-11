@@ -13,6 +13,13 @@ keys =
   , right = 39
   , up = 38
   , down = 40
+  , w = 87
+  , s = 83
+  , d = 68
+  , a = 65
+  , o = 79
+  , e = 69
+  , comma = 188
   , space = 32
   }
 
@@ -45,6 +52,7 @@ type alias Player =
   { pos : Position -- x,y position
   , coords : Coords -- col,row position
   , dir : Direction
+  , anchor : (Float, Float)
   , size : Size
   , moving : Bool
   , speed : Float
@@ -56,6 +64,7 @@ initPlayer =
   { pos = (100.0, 100.0)
   , coords = (0, 0)
   , dir = Down
+  , anchor = (0.5, 0.5)
   , size = (32, 32)
   , moving = False
   , speed = 4.0

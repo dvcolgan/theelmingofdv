@@ -23,10 +23,10 @@ updatePlayer player dt =
 -}
 updatePlayer player keysDown dt =
   let
-    left = member keys.left keysDown
-    right = member keys.right keysDown
-    up = member keys.up keysDown
-    down = member keys.down keysDown
+    left = (member keys.left keysDown) || (member keys.a keysDown)
+    right = (member keys.right keysDown) || (member keys.e keysDown) || (member keys.d keysDown)
+    up = (member keys.up keysDown) || (member keys.comma keysDown) || (member keys.w keysDown)
+    down = (member keys.down keysDown) || (member keys.o keysDown) || (member keys.s keysDown)
 
     dx = (if left then -1 else 0) + (if right then 1 else 0)
     dy = (if up then -1 else 0) + (if down then 1 else 0)
