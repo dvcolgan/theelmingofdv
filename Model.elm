@@ -51,6 +51,7 @@ type Direction = Left | Right | Up | Down
 type alias Player =
   { pos : Position -- x,y position
   , coords : Coords -- col,row position
+  , prevCoords : Coords
   , dir : Direction
   , anchor : (Float, Float)
   , size : Size
@@ -61,13 +62,14 @@ type alias Player =
 
 initPlayer : Player
 initPlayer =
-  { pos = (100.0, 100.0)
+  { pos = (32, 32)
   , coords = (0, 0)
+  , prevCoords = (0, 0)
   , dir = Down
   , anchor = (0.5, 0.5)
-  , size = (32, 32)
+  , size = (48, 48)
   , moving = False
-  , speed = 4.0
+  , speed = 2.0
   }
 
 

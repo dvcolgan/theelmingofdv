@@ -4,8 +4,19 @@ import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Html exposing (Html)
 import Model exposing (..)
+import Debug exposing (log)
 import Set
 
+
+drawGrid : Float -> Float -> Html
+drawGrid cameraWidth cameraHeight =
+  image 
+    [ xlinkHref "assets/grid.png"
+    , x "0"
+    , y "0"
+    , width "1920"
+    , height "1080"
+    ] []
 
 drawBackground : Float -> Float -> Html
 drawBackground cameraWidth cameraHeight =
@@ -34,11 +45,11 @@ drawPlayer player keysDown =
   in
     image
       [ xlinkHref "assets/snake.png"
-      , x <| toString xPos
-      , y <| toString yPos
-      , width "32px"
-      , height "32px"
-      , transform ("rotate(" ++ (toString angle) ++ ", " ++ (toString <| xPos + offsetX) ++ " " ++ (toString <| yPos + offsetY) ++ ")")
+      , x <| toString <| xPos - offsetX
+      , y <| toString <| yPos - offsetY
+      , width <| toString w
+      , height <| toString h
+      , transform ("rotate(" ++ (toString angle) ++ ", " ++ (toString xPos) ++ " " ++ (toString yPos) ++ ")")
       ]
       [ ]
   
@@ -55,5 +66,6 @@ view model =
       , height <| toString <| cameraHeight - 4
       ]
       [ drawBackground cameraWidth cameraHeight
+      , drawGrid cameraWidth cameraHeight
       , drawPlayer model.player model.keysDown
       ]
