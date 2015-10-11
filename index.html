@@ -3727,34 +3727,44 @@ Elm.Model.make = function (_elm) {
              ,keysDown: c
              ,player: a};
    });
-   var Player = F6(function (a,
+   var Player = F8(function (a,
    b,
    c,
    d,
    e,
-   f) {
+   f,
+   g,
+   h) {
       return {_: {}
+             ,anchor: e
              ,coords: b
-             ,dir: c
-             ,moving: e
+             ,dir: d
+             ,moving: g
              ,pos: a
-             ,size: d
-             ,speed: f};
+             ,prevCoords: c
+             ,size: f
+             ,speed: h};
    });
    var Down = {ctor: "Down"};
    var initPlayer = {_: {}
+                    ,anchor: {ctor: "_Tuple2"
+                             ,_0: 0.5
+                             ,_1: 0.5}
                     ,coords: {ctor: "_Tuple2"
                              ,_0: 0
                              ,_1: 0}
                     ,dir: Down
                     ,moving: false
                     ,pos: {ctor: "_Tuple2"
-                          ,_0: 100.0
-                          ,_1: 100.0}
+                          ,_0: 32
+                          ,_1: 32}
+                    ,prevCoords: {ctor: "_Tuple2"
+                                 ,_0: 0
+                                 ,_1: 0}
                     ,size: {ctor: "_Tuple2"
-                           ,_0: 32
-                           ,_1: 32}
-                    ,speed: 4.0};
+                           ,_0: 48
+                           ,_1: 48}
+                    ,speed: 2.0};
    var Up = {ctor: "Up"};
    var Right = {ctor: "Right"};
    var Left = {ctor: "Left"};
@@ -3775,11 +3785,18 @@ Elm.Model.make = function (_elm) {
              ,size: b};
    });
    var keys = {_: {}
+              ,a: 65
+              ,comma: 188
+              ,d: 68
               ,down: 40
+              ,e: 69
               ,left: 37
+              ,o: 79
               ,right: 39
+              ,s: 83
               ,space: 32
-              ,up: 38};
+              ,up: 38
+              ,w: 87};
    var tileSize = 64;
    _elm.Model.values = {_op: _op
                        ,tileSize: tileSize
@@ -13499,33 +13516,127 @@ Elm.Update.make = function (_elm) {
          player);
       }() : player;
    });
+   var playerIsAlignedOrPast = function (player) {
+      return function () {
+         var $ = player.pos,
+         xPos = $._0,
+         yPos = $._1;
+         var $ = player.coords,
+         col = $._0,
+         row = $._1;
+         var targetX = $Basics.toFloat(col * $Model.tileSize + ($Model.tileSize / 2 | 0));
+         var targetY = $Basics.toFloat(row * $Model.tileSize + ($Model.tileSize / 2 | 0));
+         var $ = player.prevCoords,
+         prevCol = $._0,
+         prevRow = $._1;
+         var dx = col - prevCol;
+         var dy = row - prevRow;
+         return _U.cmp(dx,
+         0) < 0 ? _U.cmp(xPos,
+         targetX) < 1 : _U.cmp(dx,
+         0) > 0 ? _U.cmp(xPos,
+         targetX) > -1 : _U.cmp(dy,
+         0) < 0 ? _U.cmp(yPos,
+         targetY) < 1 : _U.cmp(dy,
+         0) > 0 ? _U.cmp(yPos,
+         targetY) > -1 : true;
+      }();
+   };
    var updatePlayer = F3(function (player,
    keysDown,
    dt) {
-      return function () {
+      return $Basics.not(player.moving) || playerIsAlignedOrPast(player) ? function () {
+         var down = A2($Set.member,
+         $Model.keys.down,
+         keysDown) || (A2($Set.member,
+         $Model.keys.o,
+         keysDown) || A2($Set.member,
+         $Model.keys.s,
+         keysDown));
+         var up = A2($Set.member,
+         $Model.keys.up,
+         keysDown) || (A2($Set.member,
+         $Model.keys.comma,
+         keysDown) || A2($Set.member,
+         $Model.keys.w,
+         keysDown));
+         var right = A2($Set.member,
+         $Model.keys.right,
+         keysDown) || (A2($Set.member,
+         $Model.keys.e,
+         keysDown) || A2($Set.member,
+         $Model.keys.d,
+         keysDown));
+         var left = A2($Set.member,
+         $Model.keys.left,
+         keysDown) || A2($Set.member,
+         $Model.keys.a,
+         keysDown);
+         return $Basics.not(left) && ($Basics.not(right) && ($Basics.not(up) && $Basics.not(down))) ? function () {
+            var $ = player.coords,
+            col = $._0,
+            row = $._1;
+            return _U.replace([["moving"
+                               ,false]
+                              ,["pos"
+                               ,{ctor: "_Tuple2"
+                                ,_0: $Basics.toFloat(col * $Model.tileSize + ($Model.tileSize / 2 | 0))
+                                ,_1: $Basics.toFloat(row * $Model.tileSize + ($Model.tileSize / 2 | 0))}]],
+            player);
+         }() : function () {
+            var $ = player.coords,
+            col = $._0,
+            row = $._1;
+            var $ = player.pos,
+            x = $._0,
+            y = $._1;
+            var newDir = left ? $Model.Left : right ? $Model.Right : up ? $Model.Up : down ? $Model.Down : player.dir;
+            var dy = (up ? -1 : 0) + (down ? 1 : 0);
+            var dx = (left ? -1 : 0) + (right ? 1 : 0);
+            return _U.replace([["pos"
+                               ,{ctor: "_Tuple2"
+                                ,_0: x + dx * player.speed
+                                ,_1: y + dy * player.speed}]
+                              ,["prevCoords"
+                               ,{ctor: "_Tuple2"
+                                ,_0: col
+                                ,_1: row}]
+                              ,["coords"
+                               ,{ctor: "_Tuple2"
+                                ,_0: col + dx
+                                ,_1: row + dy}]
+                              ,["moving",true]
+                              ,["dir",newDir]],
+            player);
+         }();
+      }() : function () {
          var $ = player.pos,
          x = $._0,
          y = $._1;
-         var down = A2($Set.member,
-         $Model.keys.down,
-         keysDown);
-         var up = A2($Set.member,
-         $Model.keys.up,
-         keysDown);
-         var dy = (up ? -1 : 0) + (down ? 1 : 0);
-         var right = A2($Set.member,
-         $Model.keys.right,
-         keysDown);
-         var left = A2($Set.member,
-         $Model.keys.left,
-         keysDown);
-         var dx = (left ? -1 : 0) + (right ? 1 : 0);
-         var newDir = left ? $Model.Left : right ? $Model.Right : up ? $Model.Up : down ? $Model.Down : player.dir;
+         var newPos = function () {
+            var _v0 = player.dir;
+            switch (_v0.ctor)
+            {case "Down":
+               return {ctor: "_Tuple2"
+                      ,_0: x
+                      ,_1: y + player.speed};
+               case "Left":
+               return {ctor: "_Tuple2"
+                      ,_0: x - player.speed
+                      ,_1: y};
+               case "Right":
+               return {ctor: "_Tuple2"
+                      ,_0: x + player.speed
+                      ,_1: y};
+               case "Up":
+               return {ctor: "_Tuple2"
+                      ,_0: x
+                      ,_1: y - player.speed};}
+            _U.badCase($moduleName,
+            "between lines 84 and 89");
+         }();
          return _U.replace([["pos"
-                            ,{ctor: "_Tuple2"
-                             ,_0: x + dx
-                             ,_1: y + dy}]
-                           ,["dir",newDir]],
+                            ,newPos]],
          player);
       }();
    });
@@ -13552,7 +13663,7 @@ Elm.Update.make = function (_elm) {
                                action._0)]],
               model);}
          _U.badCase($moduleName,
-         "between lines 71 and 83");
+         "between lines 114 and 126");
       }();
    });
    var lerp = F3(function (start,
@@ -13562,6 +13673,7 @@ Elm.Update.make = function (_elm) {
    });
    _elm.Update.values = {_op: _op
                         ,lerp: lerp
+                        ,playerIsAlignedOrPast: playerIsAlignedOrPast
                         ,updatePlayer: updatePlayer
                         ,movePlayer: movePlayer
                         ,resizeCamera: resizeCamera
@@ -13590,6 +13702,9 @@ Elm.View.make = function (_elm) {
    var drawPlayer = F2(function (player,
    keysDown) {
       return function () {
+         var $ = player.anchor,
+         anchorX = $._0,
+         anchorY = $._1;
          var angle = function () {
             var _v0 = player.dir;
             switch (_v0.ctor)
@@ -13598,7 +13713,7 @@ Elm.View.make = function (_elm) {
                case "Right": return 270;
                case "Up": return 180;}
             _U.badCase($moduleName,
-            "between lines 26 and 31");
+            "between lines 37 and 42");
          }();
          var $ = player.pos,
          xPos = $._0,
@@ -13606,12 +13721,14 @@ Elm.View.make = function (_elm) {
          var $ = player.size,
          w = $._0,
          h = $._1;
+         var offsetX = anchorX * $Basics.toFloat(w);
+         var offsetY = anchorY * $Basics.toFloat(h);
          return A2($Svg.image,
-         _L.fromArray([$Svg$Attributes.xlinkHref("/assets/snake.png")
-                      ,$Svg$Attributes.x($Basics.toString(xPos))
-                      ,$Svg$Attributes.y($Basics.toString(yPos))
-                      ,$Svg$Attributes.width("32px")
-                      ,$Svg$Attributes.height("32px")
+         _L.fromArray([$Svg$Attributes.xlinkHref("assets/snake.png")
+                      ,$Svg$Attributes.x($Basics.toString(xPos - offsetX))
+                      ,$Svg$Attributes.y($Basics.toString(yPos - offsetY))
+                      ,$Svg$Attributes.width($Basics.toString(w))
+                      ,$Svg$Attributes.height($Basics.toString(h))
                       ,$Svg$Attributes.transform(A2($Basics._op["++"],
                       "rotate(",
                       A2($Basics._op["++"],
@@ -13619,11 +13736,11 @@ Elm.View.make = function (_elm) {
                       A2($Basics._op["++"],
                       ", ",
                       A2($Basics._op["++"],
-                      $Basics.toString(xPos + 16),
+                      $Basics.toString(xPos),
                       A2($Basics._op["++"],
                       " ",
                       A2($Basics._op["++"],
-                      $Basics.toString(yPos + 16),
+                      $Basics.toString(yPos),
                       ")")))))))]),
          _L.fromArray([]));
       }();
@@ -13636,6 +13753,16 @@ Elm.View.make = function (_elm) {
                    ,$Svg$Attributes.y("0")
                    ,$Svg$Attributes.width($Basics.toString(cameraWidth - 4))
                    ,$Svg$Attributes.height($Basics.toString(cameraHeight - 4))]),
+      _L.fromArray([]));
+   });
+   var drawGrid = F2(function (cameraWidth,
+   cameraHeight) {
+      return A2($Svg.image,
+      _L.fromArray([$Svg$Attributes.xlinkHref("assets/grid.png")
+                   ,$Svg$Attributes.x("0")
+                   ,$Svg$Attributes.y("0")
+                   ,$Svg$Attributes.width("1920")
+                   ,$Svg$Attributes.height("1080")]),
       _L.fromArray([]));
    });
    var view = function (model) {
@@ -13651,12 +13778,16 @@ Elm.View.make = function (_elm) {
          _L.fromArray([A2(drawBackground,
                       cameraWidth,
                       cameraHeight)
+                      ,A2(drawGrid,
+                      cameraWidth,
+                      cameraHeight)
                       ,A2(drawPlayer,
                       model.player,
                       model.keysDown)]));
       }();
    };
    _elm.View.values = {_op: _op
+                      ,drawGrid: drawGrid
                       ,drawBackground: drawBackground
                       ,drawPlayer: drawPlayer
                       ,view: view};
