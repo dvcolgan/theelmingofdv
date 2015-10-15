@@ -39,7 +39,7 @@ updatePlayer player keysDown dt =
       up = (member keys.up keysDown) || (member keys.comma keysDown) || (member keys.w keysDown)
       down = (member keys.down keysDown) || (member keys.o keysDown) || (member keys.s keysDown)
     in
-      -- if no key is pressed, stop and be aligned to the grid
+      -- If no key is pressed, stop and be aligned to the grid
       if (not left) && (not right) && (not up) && (not down) then
         let
           (col, row) = player.coords
@@ -51,6 +51,7 @@ updatePlayer player keysDown dt =
               , toFloat <| row * tileSize + tileSize // 2
               )
           }
+      -- Otherwise continue going in the new direction
       else
         let
           dx = (if left then -1 else 0) + (if right then 1 else 0)
@@ -64,10 +65,6 @@ updatePlayer player keysDown dt =
           
           (x, y) = player.pos
           (col, row) = player.coords
-          --targetX = toFloat <| col * tileSize
-          --targetY = toFloat <| row * tileSize
-          --newX = lerp x targetX dt
-          --newY = lerp y targetY dt
         in
           { player
             | pos <- (x + dx * player.speed, y + dy * player.speed)
@@ -75,7 +72,6 @@ updatePlayer player keysDown dt =
             , coords <- (col + dx, row + dy)
             , moving <- True
             , dir <- newDir
-            --, moving <- (floor x) == (floor newX) && (floor y == floor newY)
           }
   else
     -- Just continue in the direction we are going
