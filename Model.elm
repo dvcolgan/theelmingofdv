@@ -89,10 +89,12 @@ initPlayer =
 
 type alias TileMap = Dict.Dict Coords Int
 type alias CollisionMap = Dict.Dict Coords Int
+type alias ItemMap = Dict.Dict Coords Int
 
 type alias Map =
   { tiles : TileMap
   , collision : CollisionMap
+  , items : ItemMap
   }
 
 initMap = 
@@ -132,6 +134,11 @@ initMap =
       , ((3, 2), 0)
       , ((3, 3), 0)
       ]
+  , items = Dict.fromList
+      [ ((1, 3), 1)
+      , ((2, 2), 1)
+      ]
+
   }
 
 
