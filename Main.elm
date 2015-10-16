@@ -18,7 +18,7 @@ input =
   Signal.mergeMany 
     [ Signal.map KeysChanged Keyboard.keysDown
     , Signal.map (\dt -> Tick (dt / 1000)) (Time.fps 60)
-    , Signal.map ResizeWindow Window.dimensions
+    --, Signal.map ResizeWindow Window.dimensions
     ]
 
 model : Signal Model

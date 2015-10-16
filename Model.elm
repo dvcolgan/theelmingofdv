@@ -3,6 +3,7 @@ module Model where
 import Time
 import Set exposing (Set)
 import Keyboard exposing (KeyCode)
+import Dict
 
 
 tileSize : Int
@@ -23,6 +24,19 @@ keys =
   , space = 32
   }
 
+--type alias Input =
+--  { left = False
+--  , right = False
+--  , up = False
+--  , down = False
+--  }
+--
+--initInput =
+--  { left = False
+--  , right = False
+--  , up = False
+--  , down = False
+--  }
 
 type alias Keys = Set KeyCode
 
@@ -42,7 +56,7 @@ type alias Camera =
 initCamera : Camera
 initCamera =
   { pos = (0.0, 0.0)
-  , size = (1000, 800)
+  , size = (tileSize * 4, tileSize * 4)
   }
 
 
@@ -73,10 +87,59 @@ initPlayer =
   }
 
 
+type alias TileMap = Dict.Dict Coords Int
+type alias CollisionMap = Dict.Dict Coords Int
+
+type alias Map =
+  { tiles : TileMap
+  , collision : CollisionMap
+  }
+
+initMap = 
+  { tiles = Dict.fromList
+      [ ((0, 0), 0)
+      , ((0, 1), 0)
+      , ((0, 2), 1)
+      , ((0, 3), 1)
+      , ((1, 0), 0)
+      , ((1, 1), 0)
+      , ((1, 2), 1)
+      , ((1, 3), 1)
+      , ((2, 0), 0)
+      , ((2, 1), 0)
+      , ((2, 2), 0)
+      , ((2, 3), 0)
+      , ((3, 0), 0)
+      , ((3, 1), 0)
+      , ((3, 2), 0)
+      , ((3, 3), 0)
+      ]
+  , collision = Dict.fromList
+      [ ((0, 0), 0)
+      , ((0, 1), 0)
+      , ((0, 2), 1)
+      , ((0, 3), 1)
+      , ((1, 0), 0)
+      , ((1, 1), 0)
+      , ((1, 2), 1)
+      , ((1, 3), 1)
+      , ((2, 0), 0)
+      , ((2, 1), 0)
+      , ((2, 2), 0)
+      , ((2, 3), 0)
+      , ((3, 0), 0)
+      , ((3, 1), 0)
+      , ((3, 2), 0)
+      , ((3, 3), 0)
+      ]
+  }
+
+
 type alias Model =
   { player : Player
   , camera : Camera
   , keysDown : Keys
+  , map : Map
   }
 
 
@@ -85,6 +148,7 @@ initModel =
   { player = initPlayer
   , camera = initCamera
   , keysDown = Set.empty
+  , map = initMap
   }
 
 
@@ -92,6 +156,3 @@ type Action
   = NoOp
   | Tick Dt
   | KeysChanged Keys
-  | ResizeWindow Size
-
-

@@ -3,108 +3,137 @@ module Update where
 import Model exposing (..)
 import Debug exposing (log)
 import Set exposing (member)
+import Dict
 
 
 -- UPDATE
 
-lerp : Float -> Float -> Dt -> Float
-lerp start end dt =
-  (1 - dt) * start + dt * end
 
+coordsToPos : Coords -> Position
+coordsToPos (col, row) =
+  ( toFloat <| col * tileSize + tileSize // 2
+  , toFloat <| row * tileSize + tileSize // 2
+  )
 
-playerIsAlignedOrPast : Player -> Bool
-playerIsAlignedOrPast player =
+movePosTowardsCoords : Position -> Coords -> Float -> Position
+movePosTowardsCoords (x, y) coords speed =
   let
-    (prevCol, prevRow) = player.prevCoords
-    (col, row) = player.coords
-    dx = col - prevCol
-    dy = row - prevRow
-    (xPos, yPos) = player.pos
-    targetX = toFloat <| col * tileSize + tileSize // 2
-    targetY = toFloat <| row * tileSize + tileSize // 2
+    (targetX, targetY) = coordsToPos coords
+    dx = targetX - x
+    dy = targetY - y
+    dCol = if dx < 0 then -1 else if dx > 0 then 1 else 0
+    dRow = if dy < 0 then -1 else if dy > 0 then 1 else 0
   in
-    if | dx < 0 -> xPos <= targetX
-       | dx > 0 -> xPos >= targetX
-       | dy < 0 -> yPos <= targetY
-       | dy > 0 -> yPos >= targetY
+    (x + dCol * speed, y + dRow * speed)
+
+
+posIsAlignedToOrPastCoords : Position -> Coords -> Coords -> Bool
+posIsAlignedToOrPastCoords (x, y) (prevCol, prevRow) (targetCol, targetRow) =
+  let
+    dCol = targetCol - prevCol
+    dRow = targetRow - prevRow
+    targetX = toFloat <| targetCol * tileSize + tileSize // 2
+    targetY = toFloat <| targetRow * tileSize + tileSize // 2
+  in
+    if | dCol < 0 -> x <= targetX
+       | dCol > 0 -> x >= targetX
+       | dRow < 0 -> y <= targetY
+       | dRow > 0 -> y >= targetY
        | otherwise -> True
 
 
-updatePlayer : Player -> Keys -> Dt -> Player
-updatePlayer player keysDown dt =
-  if not player.moving || playerIsAlignedOrPast player then
-    -- Check if a key is down, if so go in that direction
-    let
-      left = (member keys.left keysDown) || (member keys.a keysDown)
-      right = (member keys.right keysDown) || (member keys.e keysDown) || (member keys.d keysDown)
-      up = (member keys.up keysDown) || (member keys.comma keysDown) || (member keys.w keysDown)
-      down = (member keys.down keysDown) || (member keys.o keysDown) || (member keys.s keysDown)
-    in
-      -- If no key is pressed, stop and be aligned to the grid
-      if (not left) && (not right) && (not up) && (not down) then
-        let
-          (col, row) = player.coords
-        in
-          { player
-            | moving <- False
-            , pos <-
-              ( toFloat <| col * tileSize + tileSize // 2
-              , toFloat <| row * tileSize + tileSize // 2
-              )
-          }
-      -- Otherwise continue going in the new direction
-      else
-        let
-          dx = (if left then -1 else 0) + (if right then 1 else 0)
-          dy = (if up then -1 else 0) + (if down then 1 else 0)
-
-          newDir = if | left -> Left
-                      | right -> Right
-                      | up -> Up
-                      | down -> Down
-                      | otherwise -> player.dir
-          
-          (x, y) = player.pos
-          (col, row) = player.coords
-        in
-          { player
-            | pos <- (x + dx * player.speed, y + dy * player.speed)
-            , prevCoords <- (col, row)
-            , coords <- (col + dx, row + dy)
-            , moving <- True
-            , dir <- newDir
-          }
-  else
-    -- Just continue in the direction we are going
-    let
-      (x, y) = player.pos
-      newPos = case player.dir of
-        Left -> (x - player.speed, y)
-        Right -> (x + player.speed, y)
-        Up -> (x, y - player.speed)
-        Down -> (x, y + player.speed)
-    in
-      { player | pos <- newPos }
+alignToGrid : Coords -> Position -> Position
+alignToGrid (col, row) (x, y) =
+  ( toFloat <| col * tileSize + tileSize // 2
+  , toFloat <| row * tileSize + tileSize // 2
+  )
 
 
---movePlayer : Player -> Keys -> Player
-movePlayer player keys =
-  if player.moving then
-    let
-      (col, row) = player.coords
-    in
-      { player
-        | coords <- (col + keys.x, row - keys.y) 
-        , moving <- True
-      }
-  else
-    player
+getDirectionalKeyStates : Keys -> (Bool, Bool, Bool, Bool)
+getDirectionalKeyStates keysDown =
+  ( member keys.left keysDown  || member keys.a keysDown
+  , member keys.right keysDown || member keys.e keysDown     || member keys.d keysDown
+  , member keys.up keysDown    || member keys.comma keysDown || member keys.w keysDown
+  , member keys.down keysDown  || member keys.o keysDown     || member keys.s keysDown
+  )
 
 
-resizeCamera : Camera -> Size -> Camera
-resizeCamera camera size =
-  { camera | size <- size }
-  
+coordsArePassable : CollisionMap -> Coords -> Bool
+coordsArePassable collision (col, row) =
+  case Dict.get (col, row) collision of
+    Nothing -> False
+    Just tile -> log "tile" tile == 0
+
+
+anyDirectionIsPressed : Keys -> Bool
+anyDirectionIsPressed keysDown =
+  let
+    (left, right, up, down) = getDirectionalKeyStates keysDown
+  in
+    left || right || up || down
+
+
+
+movePlayerTowardsTarget : Dt -> Player -> Player
+movePlayerTowardsTarget dt player =
+  { player
+    | pos <- movePosTowardsCoords player.pos player.coords (player.speed)
+  }
+
+
+changePlayerDirection : Player -> Keys -> Player
+changePlayerDirection player keysDown =
+  let
+    (nextCol, nextRow) = playerNextSquare player keysDown
+    (col, row) = player.coords
+  in
+    { player
+      | prevCoords <- (col, row)
+      , coords <- (nextCol, nextRow)
+    }
+
+
+playerIsAlignedToOrPastCoords : Player -> Bool
+playerIsAlignedToOrPastCoords player =
+  posIsAlignedToOrPastCoords player.pos player.prevCoords player.coords
+
+
+playerNextSquare : Player -> Keys -> Coords
+playerNextSquare player keysDown =
+  let
+    (left, right, up, down) = getDirectionalKeyStates keysDown
+    dCol = (if left then -1 else 0) + (if right then 1 else 0)
+    dRow = (if up then -1 else 0) + (if down then 1 else 0)
+    (col, row) = player.coords
+  in
+    (col + dCol, row + dRow)
+    
+
+playerNextSquareIsPassable : Player -> CollisionMap -> Keys -> Bool
+playerNextSquareIsPassable player collision keysDown =
+  playerNextSquare player keysDown
+    |> coordsArePassable collision
+
+
+stopPlayer : Player -> Player
+stopPlayer player =
+    { player
+      | pos <- alignToGrid player.coords player.pos
+      , moving <- False
+      , prevCoords <- player.coords
+    }
+
+
+updatePlayer : Player -> CollisionMap -> Keys -> Dt -> Player
+updatePlayer player collision keysDown dt =
+  if | not (playerIsAlignedToOrPastCoords player) ->
+        movePlayerTowardsTarget dt player
+     | anyDirectionIsPressed keysDown && playerNextSquareIsPassable player collision keysDown ->
+        changePlayerDirection player keysDown
+          |> movePlayerTowardsTarget dt
+     | otherwise ->
+        stopPlayer player
+
 
 update : Action -> Model -> Model
 update action model =
@@ -114,12 +143,7 @@ update action model =
       model
 
     Tick dt ->
-      { model | player <- updatePlayer model.player model.keysDown dt }
+      { model | player <- updatePlayer model.player model.map.collision model.keysDown dt }
 
     KeysChanged keys ->
       { model | keysDown <- keys }
-
-    ResizeWindow size ->
-      { model | camera <- resizeCamera model.camera size }
-
-
